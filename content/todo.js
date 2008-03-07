@@ -292,11 +292,11 @@ ko.extensions.todo = {};
             findSvc.options.caseSensitivity = this._origFindOptions.caseSensitivity;
         }
 
-        var numTodosFound = resultsMgr.view.rowCount > 0;
+        var numTodosFound = resultsMgr.view.rowCount;
         gFindSession.Reset();
 
         //RRaver updates
-        if(numTodosFound) {
+        if (numTodosFound > 0) {
             //Mimics the Komodo internal behavior
             var elt = document.getElementById('cmd_viewBottomPane');
             var boxId = elt.getAttribute('box');
