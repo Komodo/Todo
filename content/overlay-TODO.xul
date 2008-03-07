@@ -21,6 +21,7 @@
  
  Contributor(s):
    ActiveState Software Inc
+   Renato Raver
  
  Alternatively, the contents of this file may be used under the terms of
  either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -36,7 +37,15 @@
  
  ***** END LICENSE BLOCK ***** -->
 
-<!DOCTYPE overlay PUBLIC "-//MOZILLA//DTD XUL V1.0//EN" "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!DOCTYPE overlay PUBLIC "-//MOZILLA//DTD XUL V1.0//EN" "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" [
+  <!ENTITY % todoDTD SYSTEM "chrome://todo/locale/todo.dtd">
+  %todoDTD;
+]>
+
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+<?xml-stylesheet href="chrome://komodo/skin" type="text/css"?>
+<?xml-stylesheet href="chrome://komodo/skin/global/global.css" type="text/css"?>
+<?xml-stylesheet href="chrome://todo/skin" type="text/css"?>
 
 <overlay id="overlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
@@ -49,7 +58,7 @@
         <!-- Need both onmousedown and onfocus to catch selection
              by mouse and Ctrl[+Shift]+Tab -->
         <tab id="findresults720_tab"
-             label="TODO"
+             label="&todo.tabTitle;"
              onmousedown="document.getElementById('findresults720-body').focus();"
              onfocus="document.getElementById('findresults720-body').focus();" />
     </tabs>
@@ -61,7 +70,7 @@
                   align="center">
                 <label id="label-todo-desc"
                        style="height: 15px;"
-                       value="Pattern:" />
+                       value="&todo.pattern;" />
                 <!-- Needed both hidden and collapsed to ensure this label
                      does not flex out the UI! -->
                 <label id="findresults720-desc"
@@ -72,44 +81,44 @@
                        collapsed="true" />
                 <textbox id="todo_markers_textbox"
                          onkeypress="ko.extensions.todo.TextboxKeypress(event);"
-                         tooltiptext="Matching regex to search for. Example 'XXX|TODO'" />
+                         tooltiptext="&todo.patternTooltip;" />
                 <toolbarbutton id="todo_button_refresh"
                                image="chrome://komodo/content/icons/refresh.png"
-                               tooltiptext="Update search results"
+                               tooltiptext="&todo.refresh;"
                                buttonstyle="pictures"
                                oncommand="ko.extensions.todo.Refresh();" />
                 <button id="todo_search_context_button"
                         type="menu"
-                        label="Current File">
+                        label="&todo.currentFile;">
                     <menupopup id="todo_search_context_menupopup">
                         <menuitem id="todo_search_context_menuitem_currentfile"
-                                  label="Current File"
+                                  label="&todo.currentFile;"
                                   oncommand="ko.extensions.todo.ChangeSearchContext(this.label)" />
                         <menuitem id="todo_search_context_menuitem_openedfiles"
-                                  label="Opened Files"
+                                  label="&todo.openedFile;"
                                   oncommand="ko.extensions.todo.ChangeSearchContext(this.label)" />
                     </menupopup>
                 </button>
 
                 <checkbox id="todo_search_case_sensitive"
                           checked="false"
-                          label="Case sensitive"
+                          label="&todo.caseSensitive;"
                           oncommand="ko.extensions.todo.ChangeCase(this.checked)" />
                 <separator flex="1"/>
                 <button id="findresults720-jumptoprev-button"
                         class="list-item-up-icon button-toolbar-a"
-                        tooltiptext="Jump To Previous Result"
+                        tooltiptext="&todo.previousResult;"
                         oncommand="FindResultsTab_GetManager('720').jumpToPrevResult();" />
                 <button id="findresults720-jumptonext-button"
                         class="list-item-down-icon button-toolbar-a"
-                        tooltiptext="Jump To Next Result"
+                        tooltiptext="&todo.nextResult;"
                         oncommand="FindResultsTab_GetManager('720').jumpToNextResult();" />
                 <!-- We are hiding the stop button as it does not work
                      correctly. It needs to be here though for the find
                      manager / results to work correctly. -->
                 <button id="findresults720-stopsearch-button"
                         class="find-stop-icon button-toolbar-a"
-                        tooltiptext="Stop Search"
+                        tooltiptext="&todo.stopSearch;"
                         oncommand="FindResultsTab_GetManager('720').stopSearch();"
                         collapsed="true"
                         disabled="true" />
@@ -123,18 +132,18 @@
                 <treecols>
                     <treecol primary="true"
                              id="findresults720-filename"
-                             label="File"
+                             label="&todo.file;"
                              flex="1"
                              persist="width"
                              crop="left" />
                     <splitter class="tree-splitter" />
                     <treecol id="findresults720-linenum"
-                             label="Line"
+                             label="&todo.line;"
                              persist="width"
                              style="width: 4em;" />
                     <splitter class="tree-splitter" />
                     <treecol id="findresults720-context"
-                             label="Content"
+                             label="&todo.content;"
                              flex="1" />
                 </treecols>
                 <treechildren id="findresults720-body"
@@ -142,5 +151,17 @@
             </tree>
         </tabpanel>
     </tabpanels>
+
+    <statusbar fullscreentoolbar="true" orient="horizontal"
+               id="statusbarviewbox" >
+        <statusbarpanel id="statusbar-todo"
+                        class="statusbarpanel-iconic"
+                        tooltiptext="&todo.foundSome;"
+                        onclick="ko.extensions.todo.ShowTodoPane();"
+                        insertbefore="statusbar-check"
+                        src="chrome://todo/skin/todo.png"
+                        style="width: 30px;"
+                        hidden="true" />
+    </statusbar>
 
 </overlay>

@@ -19,6 +19,7 @@
  * 
  * Contributor(s):
  *   ActiveState Software Inc
+ *   Renato Raver
  * 
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -66,11 +67,13 @@ ko.extensions.todo = {};
     var log = ko.logging.getLogger("ko.extensions.todo");
 
     this.TodoSearcher = function() {
-        try {
+        try {		
+            this._locale = Components.classes["@mozilla.org/intl/stringbundle;1"]
+                    .getService(Components.interfaces.nsIStringBundleService).createBundle("chrome://todo/locale/todo.properties");
             this._needsUpdating = false;
             this._updateTimeoutId = null;
-            this._currentSearchContext = "Current File";
-            this._markers = "XXX|TODO";
+            this._currentSearchContext = this.GetLocalizedString('todo.currentFile');
+            this._markers = this.GetLocalizedString('todo.pattern');
             this._caseSensitive = true;
             this._origFindOptions = new Object();
             this._todoFindOptions = Components.classes["@activestate.com/koFindOptions;1"]
@@ -131,7 +134,7 @@ ko.extensions.todo = {};
             switch (subject) {
                 case "current_view_changed":
                     if (this._needsUpdating ||
-                        (this._currentSearchContext == "Current File")) {
+                        (this._currentSearchContext == this.GetLocalizedString('todo.currentFile'))) {
                         // topic in this case is the new view
                         this.update(topic);
                         this._needsUpdating = false;
@@ -144,9 +147,8 @@ ko.extensions.todo = {};
                     break;
 
                 case "file_changed":
-                    // This notification is sent when a document has been
-                    // changed and is reloaded in Komodo, it's sent by
-                    // views/koDocument.py
+                    // This notification is a little mis-leading, this usually
+                    // means that the file was saved or the file was reverted.
                     if (!this._updateTimeoutId) {
                         var self = this;
                         var update_func = function() {
@@ -217,7 +219,7 @@ ko.extensions.todo = {};
         }
 
         // Set the find context
-        if (this._currentSearchContext == "Opened Files") {
+        if (this._currentSearchContext == this.GetLocalizedString('todo.openedFiles')) {
             todoSearcher._todoFindContext.type = Components.interfaces.koIFindContext.FCT_ALL_OPEN_DOCS;
         } else {
             todoSearcher._todoFindContext.type = Components.interfaces.koIFindContext.FCT_CURRENT_DOC;
@@ -290,11 +292,44 @@ ko.extensions.todo = {};
             findSvc.options.caseSensitivity = this._origFindOptions.caseSensitivity;
         }
 
-        var foundSome = resultsMgr.view.rowCount > 0;
+        var numTodosFound = resultsMgr.view.rowCount > 0;
         gFindSession.Reset();
 
-        return foundSome;
+        //RRaver updates
+        if(numTodosFound) {
+            //Mimics the Komodo internal behavior
+            var elt = document.getElementById('cmd_viewBottomPane');
+            var boxId = elt.getAttribute('box');
+            var box = document.getElementById(boxId);
+            
+            if (! box.hasAttribute('collapsed') || box.getAttribute("collapsed") == "false") {
+                this.UpdateTodoStatusbar(true);
+            } else {
+                this.UpdateTodoStatusbar(false, this.GetFormattedString('todo.todosFound', [numTodosFound]) );
+            }
+        } else {
+            this.UpdateTodoStatusbar(true);
+        }
+        //RRaver updates END
+
+        return numTodosFound;
     }
+	
+    //RRaver updates
+    this.TodoSearcher.prototype.UpdateTodoStatusbar = function(hide, tooltip) {
+        var todoStatus = document.getElementById('statusbar-todo');
+        todoStatus.setAttribute("tooltiptext", tooltip || '');
+        todoStatus.hidden = hide;
+    }
+    
+    this.TodoSearcher.prototype.GetLocalizedString = function(str) {
+        return this._locale.GetStringFromName(str);
+    }
+    
+    this.TodoSearcher.prototype.GetFormattedString = function(str, ar) {
+        return this._locale.formatStringFromName(str, ar, ar.length);
+    }
+    //RRaver updates END
 
     /* Exposed non-class functions */
     this.ChangeSearchContext = function(newContext) {
@@ -348,6 +383,14 @@ ko.extensions.todo = {};
             log.exception(ex);
         }
     }
+
+    //RRaver updates
+    this.ShowTodoPane = function() {
+        ko.uilayout.togglePane('bottom_splitter', 'output_tabs', 'cmd_viewBottomPane');
+        ko.uilayout.ensureTabShown('findresults720_tab', true);
+        todoSearcher.UpdateTodoStatusbar(true);
+    }
+    //RRaver updates END
 }).apply(ko.extensions.todo);
 
 // Initialize it once Komodo has finished loading

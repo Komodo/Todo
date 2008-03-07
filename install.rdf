@@ -44,12 +44,14 @@
 		<em:type>2</em:type> <!-- type=extension --> 
 		<em:id>todo@ActiveState.com</em:id>
 		<em:name>TODO helper</em:name>
-		<em:version>1.1</em:version>
+		<em:version>1.2.0</em:version>
 		<em:description>Searchs and then lists file TODO markers</em:description>
 		<em:creator>Todd Whiteman</em:creator>
-        <!-- Leave empty to use the default Komodo settings -->
-        <em:homepageURL></em:homepageURL>
-        <em:updateURL></em:updateURL>
+		<em:contributor>Renato Rodrigues (RRaver)</em:contributor>
+		<em:iconURL>chrome://todo/skin/todoIcon.png</em:iconURL>
+		<!-- Leave empty to use the default Komodo settings -->
+		<em:homepageURL></em:homepageURL>
+		<em:updateURL></em:updateURL>
 
 		<em:targetApplication>
 			<Description>
@@ -65,6 +67,14 @@
 				<em:id>{b1042fb5-9e9c-11db-b107-000d935d3368}</em:id>
 				<em:minVersion>4.2</em:minVersion>
 				<em:maxVersion>4.*</em:maxVersion>
+			</Description>
+		</em:targetApplication>
+		<em:targetApplication>
+			<Description>
+				<!-- OpenKomodo's uuid -->
+				<em:id>{2cb9d397-8ec9-4211-bd89-7fea34120af6}</em:id>
+				<em:minVersion>0</em:minVersion>
+				<em:maxVersion>1.*</em:maxVersion>
 			</Description>
 		</em:targetApplication>
 	</Description>

@@ -1,2 +1,0 @@
-content todo chrome/content/ xpcnativewrappers=yes
-overlay chrome://komodo/content/komodo.xul chrome://todo/content/overlay-TODO.xul

@@ -37,9 +37,9 @@
 name = `basename $(PWD)`
 
 all:
-	zip -r $(name).jar content -x "*.svn*"
-	zip -d $(name).jar content/Conscript
-	#cp ../../../build/release/modules/$(name)/install.rdf .
-	zip $(name).xpi $(name).jar install.rdf chrome.manifest
+	zip -r $(name).jar content skin locale -x "*.svn*"
+	zip $(name).xpi $(name).jar install.rdf chrome.manifest -r defaults -x "*.svn*"
 	rm $(name).jar
 
+clean:
+	rm $(name).xpi
