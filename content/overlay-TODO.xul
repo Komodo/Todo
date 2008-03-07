@@ -1,0 +1,146 @@
+<?xml version="1.0"?>
+
+<!-- ***** BEGIN LICENSE BLOCK *****
+ Version: MPL 1.1/GPL 2.0/LGPL 2.1
+ 
+ The contents of this file are subject to the Mozilla Public License
+ Version 1.1 (the "License"); you may not use this file except in
+ compliance with the License. You may obtain a copy of the License at
+ http://www.mozilla.org/MPL/
+ 
+ Software distributed under the License is distributed on an "AS IS"
+ basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
+ License for the specific language governing rights and limitations
+ under the License.
+ 
+ The Original Code is Komodo code.
+ 
+ The Initial Developer of the Original Code is ActiveState Software Inc.
+ Portions created by ActiveState Software Inc are Copyright (C) 2000-2008
+ ActiveState Software Inc. All Rights Reserved.
+ 
+ Contributor(s):
+   ActiveState Software Inc
+ 
+ Alternatively, the contents of this file may be used under the terms of
+ either the GNU General Public License Version 2 or later (the "GPL"), or
+ the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ in which case the provisions of the GPL or the LGPL are applicable instead
+ of those above. If you wish to allow use of your version of this file only
+ under the terms of either the GPL or the LGPL, and not to allow others to
+ use your version of this file under the terms of the MPL, indicate your
+ decision by deleting the provisions above and replace them with the notice
+ and other provisions required by the GPL or the LGPL. If you do not delete
+ the provisions above, a recipient may use your version of this file under
+ the terms of any one of the MPL, the GPL or the LGPL.
+ 
+ ***** END LICENSE BLOCK ***** -->
+
+<!DOCTYPE overlay PUBLIC "-//MOZILLA//DTD XUL V1.0//EN" "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+<overlay id="overlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+    <script src="chrome://komodo/content/library/trace.js"    type="application/x-javascript" />
+    <script src="chrome://komodo/content/library/logging.js"  type="application/x-javascript" />
+    <script src="chrome://todo/content/todo.js"               type="application/x-javascript" />
+
+    <tabs id="output_tabs">
+        <!-- Need both onmousedown and onfocus to catch selection
+             by mouse and Ctrl[+Shift]+Tab -->
+        <tab id="findresults720_tab"
+             label="TODO"
+             onmousedown="document.getElementById('findresults720-body').focus();"
+             onfocus="document.getElementById('findresults720-body').focus();" />
+    </tabs>
+    <tabpanels id="output_tabpanels">
+        <tabpanel id="findresults720_tabpanel"
+                  orient="vertical"
+                  flex="1">
+            <hbox id="findresults720_tabpanel-toolbarbox"
+                  align="center">
+                <label id="label-todo-desc"
+                       style="height: 15px;"
+                       value="Pattern:" />
+                <!-- Needed both hidden and collapsed to ensure this label
+                     does not flex out the UI! -->
+                <label id="findresults720-desc"
+                       style="height: 15px;"
+                       value=""
+                       flex="0"
+                       hidden="true"
+                       collapsed="true" />
+                <textbox id="todo_markers_textbox"
+                         onkeypress="ko.extensions.todo.TextboxKeypress(event);"
+                         tooltiptext="Matching regex to search for. Example 'XXX|TODO'" />
+                <toolbarbutton id="todo_button_refresh"
+                               image="chrome://komodo/content/icons/refresh.png"
+                               tooltiptext="Update search results"
+                               buttonstyle="pictures"
+                               oncommand="ko.extensions.todo.Refresh();" />
+                <button id="todo_search_context_button"
+                        type="menu"
+                        label="Current File">
+                    <menupopup id="todo_search_context_menupopup">
+                        <menuitem id="todo_search_context_menuitem_currentfile"
+                                  label="Current File"
+                                  oncommand="ko.extensions.todo.ChangeSearchContext(this.label)" />
+                        <menuitem id="todo_search_context_menuitem_openedfiles"
+                                  label="Opened Files"
+                                  oncommand="ko.extensions.todo.ChangeSearchContext(this.label)" />
+                    </menupopup>
+                </button>
+
+                <checkbox id="todo_search_case_sensitive"
+                          checked="false"
+                          label="Case sensitive"
+                          oncommand="ko.extensions.todo.ChangeCase(this.checked)" />
+                <separator flex="1"/>
+                <button id="findresults720-jumptoprev-button"
+                        class="list-item-up-icon button-toolbar-a"
+                        tooltiptext="Jump To Previous Result"
+                        oncommand="FindResultsTab_GetManager('720').jumpToPrevResult();" />
+                <button id="findresults720-jumptonext-button"
+                        class="list-item-down-icon button-toolbar-a"
+                        tooltiptext="Jump To Next Result"
+                        oncommand="FindResultsTab_GetManager('720').jumpToNextResult();" />
+                <!-- We are hiding the stop button as it does not work
+                     correctly. It needs to be here though for the find
+                     manager / results to work correctly. -->
+                <button id="findresults720-stopsearch-button"
+                        class="find-stop-icon button-toolbar-a"
+                        tooltiptext="Stop Search"
+                        oncommand="FindResultsTab_GetManager('720').stopSearch();"
+                        collapsed="true"
+                        disabled="true" />
+            </hbox>
+            <tree id="findresults720"
+                  flex="1"
+                  seltype="single"
+                  onclick="FindResultsTab_GetManager('720').onClick(event);"
+                  onkeypress="return FindResultsTab_GetManager('720').onKeyPress(event);">
+                  <!--class="no-border"-->
+                <treecols>
+                    <treecol primary="true"
+                             id="findresults720-filename"
+                             label="File"
+                             flex="1"
+                             persist="width"
+                             crop="left" />
+                    <splitter class="tree-splitter" />
+                    <treecol id="findresults720-linenum"
+                             label="Line"
+                             persist="width"
+                             style="width: 4em;" />
+                    <splitter class="tree-splitter" />
+                    <treecol id="findresults720-context"
+                             label="Content"
+                             flex="1" />
+                </treecols>
+                <treechildren id="findresults720-body"
+                              flex="1" />
+            </tree>
+        </tabpanel>
+    </tabpanels>
+
+</overlay>
