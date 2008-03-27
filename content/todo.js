@@ -65,6 +65,7 @@ ko.extensions.todo = {};
     var todoId = 0x2D0; // 720, special xul id needed by the FindResults code
     var todoSearcher = null;
     var log = ko.logging.getLogger("ko.extensions.todo");
+    //log.setLevel(ko.logging.LOG_DEBUG);
 
     this.TodoSearcher = function() {
         try {		
@@ -72,16 +73,17 @@ ko.extensions.todo = {};
                     .getService(Components.interfaces.nsIStringBundleService).createBundle("chrome://todo/locale/todo.properties");
             this._needsUpdating = false;
             this._updateTimeoutId = null;
-            this._currentSearchContext = this.GetLocalizedString('todo.currentFile');
+            // Current search context is what we will search in, as well as
+            // being the string used to get the localized version of the
+            // search in context.
+            this._currentSearchContext = 'todo.currentFile';
             this._markers = this.GetLocalizedString('todo.pattern');
             this._caseSensitive = true;
             this._origFindOptions = new Object();
             this._todoFindOptions = Components.classes["@activestate.com/koFindOptions;1"]
                         .createInstance(Components.interfaces.koIFindOptions);
             this._todoFindOptions.patternType = this._todoFindOptions.FOT_REGEX_PYTHON;
-            this._todoFindContext = Components.classes["@activestate.com/koFindContext;1"]
-                        .createInstance(Components.interfaces.koIFindContext);
-            this._todoFindContext.type = Components.interfaces.koIFindContext.FCT_CURRENT_DOC;
+            this._activeProjectId = "";
 
             // Initialize settings from prefs
             this.loadFromPrefs();
@@ -93,6 +95,10 @@ ko.extensions.todo = {};
             obsSvc.addObserver(this, 'view_closed', false);
             obsSvc.addObserver(this, 'current_view_changed', false);
             obsSvc.addObserver(this, 'file_changed', false);
+            obsSvc.addObserver(this, 'current_project_changed', false);
+
+            // Ensure the search in project menu item has the correct name.
+            this.updateMenuItemLabels();
         } catch (ex) {
             log.exception(ex);
         }
@@ -111,7 +117,7 @@ ko.extensions.todo = {};
         if (prefs.hasStringPref("ko.extensions.todo.search_context")) {
             this._currentSearchContext = prefs.getStringPref("ko.extensions.todo.search_context");
         }
-        document.getElementById("todo_search_context_button").label = this._currentSearchContext;
+        document.getElementById("todo_search_context_button").label = this.GetLocalizedString(this._currentSearchContext);
 
         if (prefs.hasBooleanPref("ko.extensions.todo.case_sensitive")) {
             this._caseSensitive = prefs.getBooleanPref("ko.extensions.todo.case_sensitive");
@@ -131,10 +137,11 @@ ko.extensions.todo = {};
 
     this.TodoSearcher.prototype.observe = function(topic, subject, data) {
         try {
+            log.debug("Observing subject: " + subject);
             switch (subject) {
                 case "current_view_changed":
                     if (this._needsUpdating ||
-                        (this._currentSearchContext == this.GetLocalizedString('todo.currentFile'))) {
+                        (this._currentSearchContext == 'todo.currentFile')) {
                         // topic in this case is the new view
                         this.update(topic);
                         this._needsUpdating = false;
@@ -143,7 +150,9 @@ ko.extensions.todo = {};
 
                 case "view_opened":
                 case "view_closed":
-                    this._needsUpdating = true;
+                    if (this._currentSearchContext != "todo.activeProject") {
+                        this._needsUpdating = true;
+                    }
                     break;
 
                 case "file_changed":
@@ -160,6 +169,60 @@ ko.extensions.todo = {};
                                                                   1000);
                     }
                     break;
+
+                case "current_project_changed":
+                    var project = ko.projects.manager.getCurrentProject();
+                    // This little bit of trickery is necessary in order to
+                    // remember the project id, as we can often get a
+                    // notification when the project has not changed. Ack!
+                    if (!project && this._activeProjectId) {
+                        this._activeProjectChanged();
+                        this._activeProjectId = "";
+                        log.debug("No active project now");
+                    } else if (project && project.id != this._activeProjectId) {
+                        this._activeProjectChanged();
+                        this._activeProjectId = project.id;
+                        log.debug("Active project changed to: " + this._activeProjectId);
+                    }
+                    break;
+            }
+        } catch (ex) {
+            log.exception(ex);
+        }
+    }
+
+    this.TodoSearcher.prototype.updateMenuItemLabels = function() {
+        try {
+            // Update the button label.
+            var menuitem = document.getElementById("todo_search_context_button");
+            menuitem.label = this.GetLocalizedString(this._currentSearchContext);
+
+            // Update the project menuitem label.
+            var project = ko.projects.manager.getCurrentProject();
+            var project_menuitem = document.getElementById("todo_search_context_menuitem_activeproject");
+            var aproj_localized_string = this.GetLocalizedString("todo.activeProject");
+            if (!project) {
+                project_menuitem.label = aproj_localized_string + " (None)";
+            } else {
+                // Remove the ".kpf" from the project name.
+                var name = project.name.match(/(.*)\.kpf/)[1];
+                project_menuitem.label = aproj_localized_string + " (" + name + ")";
+            }
+            if (this._currentSearchContext == 'todo.activeProject') {
+                menuitem.label = project_menuitem.label;
+            }
+        } catch (ex) {
+            log.exception(ex);
+        }
+    }
+
+    this.TodoSearcher.prototype._activeProjectChanged = function() {
+        try {
+            this.updateMenuItemLabels();
+            // If the search-in menu is set to the project, update the search
+            // results.
+            if (this._currentSearchContext == "todo.activeProject") {
+                this.update();
             }
         } catch (ex) {
             log.exception(ex);
@@ -168,6 +231,7 @@ ko.extensions.todo = {};
 
     this.TodoSearcher.prototype.update = function(view) {
         try {
+            log.debug("Updating, view: " + view);
             if (this._updateTimeoutId) {
                 // We are updating now, don't need to wait for the timeout
                 window.clearTimeout(this._updateTimeoutId);
@@ -176,20 +240,34 @@ ko.extensions.todo = {};
             if (typeof(view) == 'undefined') {
                 view = ko.views.manager.currentView;
             }
-            this.findAll(window, view, this._todoFindContext, this._markers);
+            this.findAll(window, view, this._markers);
         } catch (ex) {
             log.exception(ex);
         }
     }
 
-    this.TodoSearcher.prototype.GetTodoTab = function(id) {
+    this.TodoSearcher.prototype.GetAndClearTheTodoTab = function(id) {
         try {
             // Create the tab or clear it and return its manager.
             var manager = _gFindResultsTab_managers[id];
             if (manager == null) {
                 manager = _FindResultsTab_Create(id);
+                // Overriding the setDescription method.
+                // This requires some knowledge of the internals of the
+                // find/replace system. This method gets called every time the
+                // find results tree is updated. Since we don't show the
+                // description at all, we can pretty much do what we want with
+                // it...
+                manager.setDescription = function(subDesc /* =null */,
+                                                  important /* =false */) {
+                    todoSearcher.UpdateTodoStatusbar(manager.view.rowCount);
+                }
+
                 _gFindResultsTab_managers[id] = manager;
             } else {
+                if (manager.isBusy()) {
+                    manager.stopSearch();
+                }
                 manager.clear();
             }
             return manager;
@@ -199,30 +277,52 @@ ko.extensions.todo = {};
         return null;
     }
 
-    this.TodoSearcher.prototype.findAll = function(editor, view, context, pattern, patternAlias) {
+    /**
+     * Callback handler used to process messages coming back from the find
+     * system.
+     */
+    this.TodoSearcher.prototype.findMsgHandler = function(level, context, msg) {
+        ko.statusBar.AddMessage(context+": "+msg, "todo", 3000, true);
+    }
+
+    this.TodoSearcher.prototype.findAll = function(editor, view, pattern, patternAlias) {
         if (findSvc == null) {
             findSvc = Components.classes["@activestate.com/koFindService;1"]
                       .getService(Components.interfaces.koIFindService);
         }
 
-        var resultsMgr = this.GetTodoTab(todoId);
+        var resultsMgr = this.GetAndClearTheTodoTab(todoId);
         if (resultsMgr == null)
             return null;
         // We need a view which contains scintilla, bug 70309 and we
         // need to catch errors when this fails, bug 70730 and bug 70708
         try {
-            if (!view || !view.scintilla)
+            if ((!view || !view.scintilla) &&
+                this._currentSearchContext == 'todo.currentFile') {
                 return null;
+            }
         } catch (ex) {
             /* no view left */
             return null;
         }
 
         // Set the find context
-        if (this._currentSearchContext == this.GetLocalizedString('todo.openedFiles')) {
-            todoSearcher._todoFindContext.type = Components.interfaces.koIFindContext.FCT_ALL_OPEN_DOCS;
-        } else {
-            todoSearcher._todoFindContext.type = Components.interfaces.koIFindContext.FCT_CURRENT_DOC;
+        if (this._currentSearchContext == 'todo.openedFiles') {
+            this._todoFindContext = Components.classes["@activestate.com/koFindContext;1"]
+                        .createInstance(Components.interfaces.koIFindContext);
+            this._todoFindContext.type = Components.interfaces.koIFindContext.FCT_ALL_OPEN_DOCS;
+        } else if (this._currentSearchContext == 'todo.currentFile') {
+            this._todoFindContext = Components.classes["@activestate.com/koFindContext;1"]
+                        .createInstance(Components.interfaces.koIFindContext);
+            this._todoFindContext.type = Components.interfaces.koIFindContext.FCT_CURRENT_DOC;
+        } else if (this._currentSearchContext == 'todo.activeProject') {
+            var project = ko.projects.manager.getCurrentProject();
+            if (!project)
+                return null;
+            this._todoFindContext = Components.classes["@activestate.com/koCollectionFindContext;1"]
+                        .createInstance(Components.interfaces.koICollectionFindContext);
+            this._todoFindContext.type = Components.interfaces.koIFindContext.FCT_IN_COLLECTION;
+            this._todoFindContext.add_koIContainer(project);
         }
         // Set the case sensitive find option
         if (this._caseSensitive) {
@@ -231,13 +331,16 @@ ko.extensions.todo = {};
             this._todoFindOptions.caseSensitivity = this._todoFindOptions.FOC_INSENSITIVE;
         }
 
-        resultsMgr.configure(pattern, patternAlias, null, context,
+        resultsMgr.configure(pattern, patternAlias, null, this._todoFindContext,
                              this._todoFindOptions);
         // Don't use show, pops open the output tab when it's closed!
         //resultsMgr.show();
 
-        resultsMgr.searchStarted();
+        if (this._currentSearchContext != 'todo.activeProject') {
+            resultsMgr.searchStarted();
+        }
         var numFilesSearched = null;
+        var context = this._todoFindContext;
 
         // Save original find settings
         this._origFindOptions.searchBackward = findSvc.options.searchBackward;
@@ -256,6 +359,7 @@ ko.extensions.todo = {};
                 //              editor.ko.views.manager.currentView.document.displayPath+"'\n");
                 _FindAllInView(editor, view, context,
                                pattern, resultsMgr.view);
+
             } else if (context.type == Components.interfaces.koIFindContext.FCT_ALL_OPEN_DOCS) {
                 var viewURI;
                 numFilesSearched = 0;
@@ -273,14 +377,22 @@ ko.extensions.todo = {};
 
                     view = _GetNextView(editor, view);
                 }
+
+            } else if (context.type == Components.interfaces.koIFindContext.FCT_IN_COLLECTION) {
+                document.getElementById("findresults720-stopsearch-button").removeAttribute("collapsed");
+                document.getElementById("findresults720-stopsearch-button").removeAttribute("hidden");
+                findSvc.findallinfiles(resultsMgr.id, pattern, resultsMgr);
+
             } else {
                 throw("unexpected context: name='" + context.name + "' type=" +
                       context.type);
             }
             // Would be good to pass in the number of files in which hits were
             // found, but don't easily have that value and it's not a biggie.
-            resultsMgr.searchFinished(true, resultsMgr.view.rowCount, null,
-                                      numFilesSearched);
+            if (this._currentSearchContext != 'todo.activeProject') {
+                resultsMgr.searchFinished(true, resultsMgr.view.rowCount, null,
+                                          numFilesSearched);
+            }
         } catch(ex) {
             log.exception(ex);
             return null;
@@ -295,31 +407,22 @@ ko.extensions.todo = {};
         var numTodosFound = resultsMgr.view.rowCount;
         gFindSession.Reset();
 
-        //RRaver updates
-        if (numTodosFound > 0) {
-            //Mimics the Komodo internal behavior
-            var elt = document.getElementById('cmd_viewBottomPane');
-            var boxId = elt.getAttribute('box');
-            var box = document.getElementById(boxId);
-            
-            if (! box.hasAttribute('collapsed') || box.getAttribute("collapsed") == "false") {
-                this.UpdateTodoStatusbar(true);
-            } else {
-                this.UpdateTodoStatusbar(false, this.GetFormattedString('todo.todosFound', [numTodosFound]) );
-            }
-        } else {
-            this.UpdateTodoStatusbar(true);
-        }
-        //RRaver updates END
+        this.UpdateTodoStatusbar(numTodosFound);
 
         return numTodosFound;
     }
 	
     //RRaver updates
-    this.TodoSearcher.prototype.UpdateTodoStatusbar = function(hide, tooltip) {
-        var todoStatus = document.getElementById('statusbar-todo');
-        todoStatus.setAttribute("tooltiptext", tooltip || '');
-        todoStatus.hidden = hide;
+    this.TodoSearcher.prototype.UpdateTodoStatusbar = function(numTodosFound) {
+        var todoStatusElem = document.getElementById('statusbar-todo');
+        if (numTodosFound > 0) {
+            todoStatusElem.hidden = false;
+            todoStatusElem.setAttribute("tooltiptext", this.GetFormattedString('todo.todosFound', [numTodosFound]));
+        } else {
+            /* Hide the todo statusbar item */
+            todoStatusElem.hidden = true;
+        }
+
     }
     
     this.TodoSearcher.prototype.GetLocalizedString = function(str) {
@@ -336,7 +439,7 @@ ko.extensions.todo = {};
         if (newContext != todoSearcher._currentSearchContext) {
             todoSearcher._currentSearchContext = newContext;
             todoSearcher.update();
-            document.getElementById("todo_search_context_button").label = newContext;
+            todoSearcher.updateMenuItemLabels();
             todoSearcher.saveToPrefs();
         }
     }
@@ -385,12 +488,15 @@ ko.extensions.todo = {};
     }
 
     //RRaver updates
-    this.ShowTodoPane = function() {
-        ko.uilayout.togglePane('bottom_splitter', 'output_tabs', 'cmd_viewBottomPane');
-        ko.uilayout.ensureTabShown('findresults720_tab', true);
-        todoSearcher.UpdateTodoStatusbar(true);
+    this.ToggleTodoPane = function() {
+        ko.uilayout.togglePane('bottom_splitter', 'output_tabs', 'cmd_viewBottomPane', true);
+        if (ko.uilayout.isPaneShown(document.getElementById("output_tabs"))) {
+            // Make the todo tab the current tab that is shown.
+            ko.uilayout.ensureTabShown("findresults720_tab", false);
+        }
     }
     //RRaver updates END
+
 }).apply(ko.extensions.todo);
 
 // Initialize it once Komodo has finished loading

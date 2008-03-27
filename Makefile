@@ -39,7 +39,7 @@ name = `basename $(PWD)`
 all:
 	zip -r $(name).jar content skin locale -x "*.svn*"
 	zip $(name).xpi $(name).jar install.rdf chrome.manifest -r defaults -x "*.svn*"
-	rm $(name).jar
+	#rm $(name).jar
 
 clean:
 	rm $(name).xpi

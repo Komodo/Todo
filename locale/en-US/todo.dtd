@@ -40,7 +40,8 @@
 <!ENTITY todo.patternTooltip "Matching regex to search for. Example 'XXX|TODO'">
 <!ENTITY todo.refresh "Update search results">
 <!ENTITY todo.currentFile "Current File">
-<!ENTITY todo.openedFile "Opened Files">
+<!ENTITY todo.openedFiles "Opened Files">
+<!ENTITY todo.activeProject "Active Project">
 <!ENTITY todo.caseSensitive "Case sensitive">
 <!ENTITY todo.previousResult "Jump To Previous Result">
 <!ENTITY todo.nextResult "Jump To Next Result">

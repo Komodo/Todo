@@ -71,7 +71,7 @@
                 <label id="label-todo-desc"
                        style="height: 15px;"
                        value="&todo.pattern;" />
-                <!-- Needed both hidden and collapsed to ensure this label
+                <!-- Needs both hidden and collapsed to ensure this label
                      does not flex out the UI! -->
                 <label id="findresults720-desc"
                        style="height: 15px;"
@@ -93,10 +93,16 @@
                     <menupopup id="todo_search_context_menupopup">
                         <menuitem id="todo_search_context_menuitem_currentfile"
                                   label="&todo.currentFile;"
-                                  oncommand="ko.extensions.todo.ChangeSearchContext(this.label)" />
+                                  value="todo.currentFile"
+                                  oncommand="ko.extensions.todo.ChangeSearchContext(this.value)" />
                         <menuitem id="todo_search_context_menuitem_openedfiles"
-                                  label="&todo.openedFile;"
-                                  oncommand="ko.extensions.todo.ChangeSearchContext(this.label)" />
+                                  label="&todo.openedFiles;"
+                                  value="todo.openedFiles"
+                                  oncommand="ko.extensions.todo.ChangeSearchContext(this.value)" />
+                        <menuitem id="todo_search_context_menuitem_activeproject"
+                                  label="&todo.activeProject;"
+                                  value="todo.activeProject"
+                                  oncommand="ko.extensions.todo.ChangeSearchContext(this.value)" />
                     </menupopup>
                 </button>
 
@@ -157,7 +163,7 @@
         <statusbarpanel id="statusbar-todo"
                         class="statusbarpanel-iconic"
                         tooltiptext="&todo.foundSome;"
-                        onclick="ko.extensions.todo.ShowTodoPane();"
+                        onclick="ko.extensions.todo.ToggleTodoPane();"
                         insertbefore="statusbar-check"
                         src="chrome://todo/skin/todo.png"
                         style="width: 30px;"
