@@ -83,7 +83,7 @@
                          onkeypress="ko.extensions.todo.TextboxKeypress(event);"
                          tooltiptext="&todo.patternTooltip;" />
                 <toolbarbutton id="todo_button_refresh"
-                               image="chrome://komodo/content/icons/refresh.png"
+                               image="chrome://komodo/skin/global/images/refresh.png"
                                tooltiptext="&todo.refresh;"
                                buttonstyle="pictures"
                                oncommand="ko.extensions.todo.Refresh();" />
