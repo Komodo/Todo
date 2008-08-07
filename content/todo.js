@@ -115,10 +115,10 @@ ko.extensions.todo = {};
         try {
             var obsSvc = Components.classes["@mozilla.org/observer-service;1"].
                                getService(Components.interfaces.nsIObserverService);
-            obsSvc.removeObserver(this, 'view_opened');
-            obsSvc.removeObserver(this, 'view_closed');
             obsSvc.removeObserver(this, 'current_view_changed');
             obsSvc.removeObserver(this, 'file_changed');
+            window.removeEventListener('view_closed', this._handle_view_change, false);
+            window.removeEventListener('view_opened', this._handle_view_change, false);
         } catch (ex) {
             log.exception(ex);
         }
