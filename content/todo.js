@@ -91,7 +91,6 @@ ko.extensions.todo = {};
             // Listen for some Komodo view events
             var obsSvc = Components.classes["@mozilla.org/observer-service;1"].
                                getService(Components.interfaces.nsIObserverService);
-            obsSvc.addObserver(this, 'current_view_changed', false);
             obsSvc.addObserver(this, 'file_changed', false);
             obsSvc.addObserver(this, 'current_project_changed', false);
 
@@ -101,6 +100,10 @@ ko.extensions.todo = {};
                     this._needsUpdating = true;
                 }
             }
+            this._handle_current_view_changed_setup = function(event) {
+                self._handle_current_view_changed(event);
+            }
+            window.addEventListener('current_view_changed', this._handle_current_view_changed_setup, false);
             window.addEventListener('view_closed', this._handle_view_change, false);
             window.addEventListener('view_opened', this._handle_view_change, false);
 
@@ -115,8 +118,8 @@ ko.extensions.todo = {};
         try {
             var obsSvc = Components.classes["@mozilla.org/observer-service;1"].
                                getService(Components.interfaces.nsIObserverService);
-            obsSvc.removeObserver(this, 'current_view_changed');
             obsSvc.removeObserver(this, 'file_changed');
+            window.removeEventListener('current_view_changed', this._handle_current_view_changed_setup, false);
             window.removeEventListener('view_closed', this._handle_view_change, false);
             window.removeEventListener('view_opened', this._handle_view_change, false);
         } catch (ex) {
@@ -155,19 +158,18 @@ ko.extensions.todo = {};
         prefs.setBooleanPref("ko.extensions.todo.case_sensitive", this._caseSensitive);
     }
 
-    this.TodoSearcher.prototype.observe = function(topic, subject, data) {
-        try {
-            log.debug("Observing subject: " + subject);
-            switch (subject) {
-                case "current_view_changed":
-                    if (this._needsUpdating ||
-                        (this._currentSearchContext == 'todo.currentFile')) {
-                        // topic in this case is the new view
-                        this.update(topic);
-                        this._needsUpdating = false;
-                    }
-                    break;
+    this.TodoSearcher.prototype._handle_current_view_changed = function(event) {
+        if (this._needsUpdating ||
+            (this._currentSearchContext == "Current File")) {
+            this.update(event.originalTarget);
+            this._needsUpdating = false;
+        }
+    }
 
+    this.TodoSearcher.prototype.observe = function(subject, topic, data) {
+        try {
+            log.debug("Observing topic: " + topic);
+            switch (topic) {
                 case "file_changed":
                     // This notification is a little mis-leading, this usually
                     // means that the file was saved or the file was reverted.
