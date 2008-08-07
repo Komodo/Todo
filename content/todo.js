@@ -91,14 +91,34 @@ ko.extensions.todo = {};
             // Listen for some Komodo view events
             var obsSvc = Components.classes["@mozilla.org/observer-service;1"].
                                getService(Components.interfaces.nsIObserverService);
-            obsSvc.addObserver(this, 'view_opened', false);
-            obsSvc.addObserver(this, 'view_closed', false);
             obsSvc.addObserver(this, 'current_view_changed', false);
             obsSvc.addObserver(this, 'file_changed', false);
             obsSvc.addObserver(this, 'current_project_changed', false);
 
+            var self = this;
+            this._handle_view_change = function(event) {
+                if (this._currentSearchContext != "todo.activeProject") {
+                    this._needsUpdating = true;
+                }
+            }
+            window.addEventListener('view_closed', this._handle_view_change, false);
+            window.addEventListener('view_opened', this._handle_view_change, false);
+
             // Ensure the search in project menu item has the correct name.
             this.updateMenuItemLabels();
+        } catch (ex) {
+            log.exception(ex);
+        }
+    }
+
+    this.TodoSearcher.prototype.onUnload = function() {
+        try {
+            var obsSvc = Components.classes["@mozilla.org/observer-service;1"].
+                               getService(Components.interfaces.nsIObserverService);
+            obsSvc.removeObserver(this, 'view_opened');
+            obsSvc.removeObserver(this, 'view_closed');
+            obsSvc.removeObserver(this, 'current_view_changed');
+            obsSvc.removeObserver(this, 'file_changed');
         } catch (ex) {
             log.exception(ex);
         }
@@ -145,13 +165,6 @@ ko.extensions.todo = {};
                         // topic in this case is the new view
                         this.update(topic);
                         this._needsUpdating = false;
-                    }
-                    break;
-
-                case "view_opened":
-                case "view_closed":
-                    if (this._currentSearchContext != "todo.activeProject") {
-                        this._needsUpdating = true;
                     }
                     break;
 
@@ -286,11 +299,6 @@ ko.extensions.todo = {};
     }
 
     this.TodoSearcher.prototype.findAll = function(editor, view, pattern, patternAlias) {
-        if (findSvc == null) {
-            findSvc = Components.classes["@activestate.com/koFindService;1"]
-                      .getService(Components.interfaces.koIFindService);
-        }
-
         var resultsMgr = this.GetAndClearTheTodoTab(todoId);
         if (resultsMgr == null)
             return null;
@@ -343,6 +351,8 @@ ko.extensions.todo = {};
         var context = this._todoFindContext;
 
         // Save original find settings
+        var findSvc = Components.classes["@activestate.com/koFindService;1"]
+                      .getService(Components.interfaces.koIFindService);
         this._origFindOptions.searchBackward = findSvc.options.searchBackward;
         this._origFindOptions.matchWord= findSvc.options.matchWord;
         this._origFindOptions.patternType = findSvc.options.patternType;
@@ -487,6 +497,11 @@ ko.extensions.todo = {};
         }
     }
 
+    this.OnUnload = function() {
+        todoSearcher.onUnload();
+        delete todoSearcher;
+    }
+
     //RRaver updates
     this.ToggleTodoPane = function() {
         ko.uilayout.togglePane('bottom_splitter', 'output_tabs', 'cmd_viewBottomPane', true);
@@ -502,3 +517,4 @@ ko.extensions.todo = {};
 // Initialize it once Komodo has finished loading
 // XXX: TODO: Use an observer or notification mechanism.
 addEventListener("load", function() { setTimeout(ko.extensions.todo.OnLoad, 3000); }, false);
+addEventListener("unload", ko.extensions.todo.OnUnload, false);
