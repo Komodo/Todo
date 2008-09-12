@@ -69,8 +69,9 @@ ko.extensions.todo = {};
 
     this.TodoSearcher = function() {
         try {		
-            this._locale = Components.classes["@mozilla.org/intl/stringbundle;1"]
-                    .getService(Components.interfaces.nsIStringBundleService).createBundle("chrome://todo/locale/todo.properties");
+            var bundleSvc = Components.classes["@mozilla.org/intl/stringbundle;1"]
+                    .getService(Components.interfaces.nsIStringBundleService);
+            this._locale = bundleSvc.createBundle("chrome://todo/locale/todo.properties");
             this._needsUpdating = false;
             this._updateTimeoutId = null;
             // Current search context is what we will search in, as well as
@@ -93,19 +94,32 @@ ko.extensions.todo = {};
                                getService(Components.interfaces.nsIObserverService);
             obsSvc.addObserver(this, 'file_changed', false);
             obsSvc.addObserver(this, 'current_project_changed', false);
+            /* These three observer notifications are used before Komodo 5.0 */
+            obsSvc.addObserver(this, 'view_opened', false);
+            obsSvc.addObserver(this, 'view_closed', false);
+            obsSvc.addObserver(this, 'current_view_changed', false);
 
+            /* Komodo 5.0 style notifications for the three above events. */
             var self = this;
-            this._handle_view_change = function(event) {
-                if (this._currentSearchContext != "todo.activeProject") {
-                    this._needsUpdating = true;
+            this._handle_num_views_changed_event = function(event) {
+                self._handle_num_views_changed();
+            }
+            this._handle_current_view_changed_event = function(event) {
+                self._handle_current_view_changed(event.originalTarget);
+            }
+            window.addEventListener('view_closed', this._handle_num_views_changed_event, false);
+            window.addEventListener('view_opened', this._handle_num_views_changed_event, false);
+            window.addEventListener('current_view_changed', this._handle_current_view_changed_event, false);
+
+            /* Komodo 4.x requires us to initially create the findSvc instance */
+            var appInfo = Components.classes["@activestate.com/koInfoService;1"].
+                            getService(Components.interfaces.koIInfoService);
+            if (appInfo.version[0] <= "4") {
+                if (findSvc == null) {
+                    findSvc = Components.classes["@activestate.com/koFindService;1"]
+                              .getService(Components.interfaces.koIFindService);
                 }
             }
-            this._handle_current_view_changed_setup = function(event) {
-                self._handle_current_view_changed(event);
-            }
-            window.addEventListener('current_view_changed', this._handle_current_view_changed_setup, false);
-            window.addEventListener('view_closed', this._handle_view_change, false);
-            window.addEventListener('view_opened', this._handle_view_change, false);
 
             // Ensure the search in project menu item has the correct name.
             this.updateMenuItemLabels();
@@ -119,9 +133,13 @@ ko.extensions.todo = {};
             var obsSvc = Components.classes["@mozilla.org/observer-service;1"].
                                getService(Components.interfaces.nsIObserverService);
             obsSvc.removeObserver(this, 'file_changed');
-            window.removeEventListener('current_view_changed', this._handle_current_view_changed_setup, false);
-            window.removeEventListener('view_closed', this._handle_view_change, false);
-            window.removeEventListener('view_opened', this._handle_view_change, false);
+            obsSvc.removeObserver(this, 'current_project_changed');
+            obsSvc.removeObserver(this, 'view_opened');
+            obsSvc.removeObserver(this, 'view_closed');
+            obsSvc.removeObserver(this, 'current_view_changed');
+            window.removeEventListener('current_view_changed', this._handle_current_view_changed_event, false);
+            window.removeEventListener('view_closed', this._handle_num_views_changed_event, false);
+            window.removeEventListener('view_opened', this._handle_num_views_changed_event, false);
         } catch (ex) {
             log.exception(ex);
         }
@@ -139,6 +157,13 @@ ko.extensions.todo = {};
 
         if (prefs.hasStringPref("ko.extensions.todo.search_context")) {
             this._currentSearchContext = prefs.getStringPref("ko.extensions.todo.search_context");
+            // Ensure the pref name is a valid property name.
+            if ((this._currentSearchContext != "todo.currentFile") &&
+                (this._currentSearchContext != "todo.activeProject") &&
+                (this._currentSearchContext != "todo.openedFiles")) {
+                log.warn("Invalid setting for current search context: " + this._currentSearchContext);
+                this._currentSearchContext = "todo.currentFile";
+            }
         }
         document.getElementById("todo_search_context_button").label = this.GetLocalizedString(this._currentSearchContext);
 
@@ -158,10 +183,18 @@ ko.extensions.todo = {};
         prefs.setBooleanPref("ko.extensions.todo.case_sensitive", this._caseSensitive);
     }
 
-    this.TodoSearcher.prototype._handle_current_view_changed = function(event) {
+    this.TodoSearcher.prototype._handle_num_views_changed = function() {
+        if (this._currentSearchContext != "todo.activeProject") {
+            this._needsUpdating = true;
+            // The actual update will happen through the current_view_changed
+            // notification event, which will occur soon after this event.
+        }
+    }
+
+    this.TodoSearcher.prototype._handle_current_view_changed = function(view) {
         if (this._needsUpdating ||
-            (this._currentSearchContext == "Current File")) {
-            this.update(event.originalTarget);
+            (this._currentSearchContext == "todo.currentFile")) {
+            this.update(view);
             this._needsUpdating = false;
         }
     }
@@ -170,6 +203,15 @@ ko.extensions.todo = {};
         try {
             log.debug("Observing topic: " + topic);
             switch (topic) {
+                case "current_view_changed":
+                    this._handle_current_view_changed(topic);
+                    break;
+
+                case "view_opened":
+                case "view_closed":
+                    this._handle_num_views_changed();
+                    break;
+
                 case "file_changed":
                     // This notification is a little mis-leading, this usually
                     // means that the file was saved or the file was reverted.

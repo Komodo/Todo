@@ -164,7 +164,7 @@
                         class="statusbarpanel-iconic"
                         tooltiptext="&todo.foundSome;"
                         onclick="ko.extensions.todo.ToggleTodoPane();"
-                        insertbefore="statusbar-check"
+                        insertbefore="statusbar-section"
                         src="chrome://todo/skin/todo.png"
                         style="width: 30px;"
                         hidden="true" />
