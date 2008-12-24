@@ -297,6 +297,11 @@ ko.extensions.todo = {};
             if (typeof(view) == 'undefined') {
                 view = ko.views.manager.currentView;
             }
+            if (!this._markers) {
+                // Clear the results.
+                this.GetAndClearTheTodoTab(todoId);
+                return;
+            }
             this.findAll(window, view, this._markers);
         } catch (ex) {
             log.exception(ex);
