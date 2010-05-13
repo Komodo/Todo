@@ -40,6 +40,8 @@
 <!DOCTYPE overlay PUBLIC "-//MOZILLA//DTD XUL V1.0//EN" "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" [
   <!ENTITY % todoDTD SYSTEM "chrome://todo/locale/todo.dtd">
   %todoDTD;
+  <!ENTITY % komodoDTD SYSTEM "chrome://komodo/locale/komodo.dtd">
+  %komodoDTD;
 ]>
 
 <?xml-stylesheet href="chrome://global/skin" type="text/css"?>

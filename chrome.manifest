@@ -3,4 +3,5 @@ content todo jar:todo.jar!/content/ xpcnativewrappers=yes
 locale todo en-US jar:todo.jar!/locale/en-US/
 skin todo classic/1.0 jar:todo.jar!/skin/
 
-overlay chrome://komodo/content/komodo.xul chrome://todo/content/overlay-TODO.xul
+overlay chrome://komodo/content/komodo.xul chrome://todo/content/overlay-TODO.xul appversion<6b1
+overlay chrome://komodo/content/komodo.xul chrome://todo/content/overlay-TODO-ko6.xul appversion>=6b1
