@@ -111,13 +111,6 @@
                           label="&todo.caseSensitive;"
                           oncommand="ko.extensions.todo.ChangeCase(this.checked)" />
                 <separator flex="1"/>
-                <textbox id="findresults720-filter-textbox"
-                         class="search-box"
-                         type="search"
-                         timeout="200"
-                         oncommand="FindResultsTab_GetManager('720').updateFilter();"
-                         tooltiptext="&filterSymbols.tooltiptext;"
-                         />
                 <button id="findresults720-jumptoprev-button"
                         class="list-item-up-icon button-toolbar-a"
                         tooltiptext="&todo.previousResult;"

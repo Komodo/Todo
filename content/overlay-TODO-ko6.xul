@@ -118,25 +118,28 @@
                          type="search"
                          timeout="200"
                          oncommand="FindResultsTab_GetManager('720').updateFilter();"
-                         tooltiptext="&filterSymbols.tooltiptext;"
+                         tooltiptext="&findFilter.tooltiptext;"
                          />
-                <button id="findresults720-jumptoprev-button"
-                        class="list-item-up-icon button-toolbar-a"
-                        tooltiptext="&todo.previousResult;"
-                        oncommand="FindResultsTab_GetManager('720').jumpToPrevResult();" />
-                <button id="findresults720-jumptonext-button"
-                        class="list-item-down-icon button-toolbar-a"
-                        tooltiptext="&todo.nextResult;"
-                        oncommand="FindResultsTab_GetManager('720').jumpToNextResult();" />
-                <!-- We are hiding the stop button as it does not work
-                     correctly. It needs to be here though for the find
-                     manager / results to work correctly. -->
-                <button id="findresults720-stopsearch-button"
-                        class="find-stop-icon button-toolbar-a"
-                        tooltiptext="&todo.stopSearch;"
-                        oncommand="FindResultsTab_GetManager('720').stopSearch();"
-                        collapsed="true"
-                        disabled="true" />
+                <hbox id="findtoolbar720-button-box" class="no-border solo-toolbaritem"
+                      align="center">
+                    <toolbarbutton id="findresults720-jumptoprev-button"
+                            class="list-item-up-icon button-toolbar-a"
+                            tooltiptext="&todo.previousResult;"
+                            oncommand="FindResultsTab_GetManager('720').jumpToPrevResult();" />
+                    <toolbarbutton id="findresults720-jumptonext-button"
+                            class="list-item-down-icon button-toolbar-a"
+                            tooltiptext="&todo.nextResult;"
+                            oncommand="FindResultsTab_GetManager('720').jumpToNextResult();" />
+                    <!-- We are hiding the stop button as it does not work
+                         correctly. It needs to be here though for the find
+                         manager / results to work correctly. -->
+                    <toolbarbutton id="findresults720-stopsearch-button"
+                            class="find-stop-icon button-toolbar-a"
+                            tooltiptext="&todo.stopSearch;"
+                            oncommand="FindResultsTab_GetManager('720').stopSearch();"
+                            collapsed="true"
+                            disabled="true" />
+                </hbox>
             </hbox>
             <tree id="findresults720"
                   flex="1"
