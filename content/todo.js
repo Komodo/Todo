@@ -262,7 +262,10 @@ ko.extensions.todo = {};
                 project_menuitem.label = aproj_localized_string + " (None)";
             } else {
                 // Remove the ".kpf" from the project name.
-                var name = project.name.match(/(.*)\.kpf/)[1];
+                var name = project.name.match(/(.*)\.(kpf|komodoproject)/)[1];
+                if (!name) {
+                    name = project.name;
+                }
                 project_menuitem.label = aproj_localized_string + " (" + name + ")";
             }
             if (this._currentSearchContext == 'todo.activeProject') {
@@ -423,7 +426,10 @@ ko.extensions.todo = {};
                 var viewURI;
                 numFilesSearched = 0;
                 while (view) {
-                    viewURI = view.document.displayPath;
+
+                    // Deal with K5 v's K6 differences.
+                    viewURI = (view.koDoc || view.document).displayPath;
+
                     if (gFindSession.HaveSearchedThisUrlAlready(viewURI)) {
                         log.debug("findAll: have already searched '"+
                                       viewURI+"'\n");
