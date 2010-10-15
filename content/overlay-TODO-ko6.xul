@@ -44,16 +44,11 @@
   %komodoDTD;
 ]>
 
-<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
-<?xml-stylesheet href="chrome://komodo/skin" type="text/css"?>
-<?xml-stylesheet href="chrome://komodo/skin/global/global.css" type="text/css"?>
 <?xml-stylesheet href="chrome://todo/skin" type="text/css"?>
 
 <overlay id="overlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-    <script src="chrome://komodo/content/library/trace.js"    type="application/x-javascript" />
-    <script src="chrome://komodo/content/library/logging.js"  type="application/x-javascript" />
     <script src="chrome://todo/content/todo.js"               type="application/x-javascript" />
 
     <tabs id="output_tabs">
