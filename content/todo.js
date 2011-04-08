@@ -67,6 +67,19 @@ ko.extensions.todo = {};
     var log = ko.logging.getLogger("ko.extensions.todo");
     //log.setLevel(ko.logging.LOG_DEBUG);
 
+    function _getTabManagerList() {
+        if ("findresults" in ko) {
+            return ko.findresults.managers;
+        } else {
+            return _gFindResultsTab_managers;
+        }
+    }
+
+    this.__defineGetter__("manager", function() {
+                return _getTabManagerList()['720'];
+            }
+    );
+
     this.TodoSearcher = function() {
         try {		
             var bundleSvc = Components.classes["@mozilla.org/intl/stringbundle;1"]
@@ -314,9 +327,9 @@ ko.extensions.todo = {};
     this.TodoSearcher.prototype.GetAndClearTheTodoTab = function(id) {
         try {
             // Create the tab or clear it and return its manager.
-            var manager = _gFindResultsTab_managers[id];
+            var manager = _getTabManagerList()[id];
             if (manager == null) {
-                manager = _FindResultsTab_Create(id);
+                manager = ("findresults" in ko) ? ko.findresults.create(id) : _FindResultsTab_Create(id);
                 // Overriding the setDescription method.
                 // This requires some knowledge of the internals of the
                 // find/replace system. This method gets called every time the
@@ -328,7 +341,7 @@ ko.extensions.todo = {};
                     todoSearcher.UpdateTodoStatusbar(manager.view.rowCount);
                 }
 
-                _gFindResultsTab_managers[id] = manager;
+                _getTabManagerList()[id] = manager;
             } else {
                 if (manager.isBusy()) {
                     manager.stopSearch();
@@ -550,7 +563,7 @@ ko.extensions.todo = {};
     this.OnLoad = function() {
         // Ensure find results knows about us
         try {
-            _gFindResultsTab_managers[todoId] = null;
+            _getTabManagerList()[todoId] = null;
             todoSearcher = new ko.extensions.todo.TodoSearcher();
             if (ko.views.manager.currentView) {
                 todoSearcher.update();

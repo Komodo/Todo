@@ -112,7 +112,7 @@
                          class="search-box"
                          type="search"
                          timeout="200"
-                         oncommand="FindResultsTab_GetManager('720').updateFilter();"
+                         oncommand="ko.extensions.todo.manager.updateFilter();"
                          tooltiptext="&findFilter.tooltiptext;"
                          />
                 <hbox id="findtoolbar720-button-box" class="no-border solo-toolbaritem"
@@ -120,18 +120,18 @@
                     <toolbarbutton id="findresults720-jumptoprev-button"
                             class="list-item-up-icon button-toolbar-a"
                             tooltiptext="&todo.previousResult;"
-                            oncommand="FindResultsTab_GetManager('720').jumpToPrevResult();" />
+                            oncommand="ko.extensions.todo.manager.jumpToPrevResult();" />
                     <toolbarbutton id="findresults720-jumptonext-button"
                             class="list-item-down-icon button-toolbar-a"
                             tooltiptext="&todo.nextResult;"
-                            oncommand="FindResultsTab_GetManager('720').jumpToNextResult();" />
+                            oncommand="ko.extensions.todo.manager.jumpToNextResult();" />
                     <!-- We are hiding the stop button as it does not work
                          correctly. It needs to be here though for the find
                          manager / results to work correctly. -->
                     <toolbarbutton id="findresults720-stopsearch-button"
                             class="find-stop-icon button-toolbar-a"
                             tooltiptext="&todo.stopSearch;"
-                            oncommand="FindResultsTab_GetManager('720').stopSearch();"
+                            oncommand="ko.extensions.todo.manager.stopSearch();"
                             collapsed="true"
                             disabled="true" />
                 </hbox>
@@ -139,8 +139,8 @@
             <tree id="findresults720"
                   flex="1"
                   seltype="single"
-                  onclick="FindResultsTab_GetManager('720').onClick(event);"
-                  onkeypress="return FindResultsTab_GetManager('720').onKeyPress(event);">
+                  onclick="ko.extensions.todo.manager.onClick(event);"
+                  onkeypress="return ko.extensions.todo.manager.onKeyPress(event);">
                   <!--class="no-border"-->
                 <treecols>
                     <treecol primary="true"
