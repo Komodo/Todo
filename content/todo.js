@@ -402,6 +402,9 @@ ko.extensions.todo = {};
         var numFilesSearched = null;
         var context = this._todoFindContext;
 
+        var findSessionSvc = Components.classes["@activestate.com/koFindSession;1"].
+                                getService(Components.interfaces.koIFindSession);
+
         // Save original find settings
         var findSvc = Components.classes["@activestate.com/koFindService;1"]
                       .getService(Components.interfaces.koIFindService);
@@ -415,12 +418,15 @@ ko.extensions.todo = {};
         findSvc.options.patternType = this._todoFindOptions.patternType;
         findSvc.options.caseSensitivity = this._todoFindOptions.caseSensitivity;
         try {
+            var fn_FindAllInView = ("find" in ko && "_findAllInView" in ko.find) ?
+                                    ko.find._findAllInView /* komodo 7+ */ :
+                                    _FindAllInView         /* komodo 6- */;
             if (context.type == Components.interfaces.koIFindContext.FCT_CURRENT_DOC
                 || context.type == Components.interfaces.koIFindContext.FCT_SELECTION) {
-                //log.debug("Find_FindAll: find all in '"+
+                //log.debug("ko.find.findAll: find all in '"+
                 //              editor.ko.views.manager.currentView.document.displayPath+"'\n");
-                _FindAllInView(editor, view, context,
-                               pattern, resultsMgr.view);
+                fn_FindAllInView(editor, view, context,
+                                 pattern, resultsMgr.view);
 
             } else if (context.type == Components.interfaces.koIFindContext.FCT_ALL_OPEN_DOCS) {
                 var viewURI;
@@ -430,17 +436,19 @@ ko.extensions.todo = {};
                     // Deal with K5 v's K6 differences.
                     viewURI = (view.koDoc || view.document).displayPath;
 
-                    if (gFindSession.HaveSearchedThisUrlAlready(viewURI)) {
+                    if (findSessionSvc.HaveSearchedThisUrlAlready(viewURI)) {
                         log.debug("findAll: have already searched '"+
                                       viewURI+"'\n");
                         break;
                     }
 
                     log.debug("findAll: find all in '"+viewURI+"'\n");
-                    _FindAllInView(editor, view, context, pattern, resultsMgr.view);
+                    fn_FindAllInView(editor, view, context, pattern, resultsMgr.view);
                     numFilesSearched += 1;
 
-                    view = _GetNextView(editor, view);
+                    view = ("find" in ko && "_getNextView" in ko.find) ?
+                            ko.find._getNextView(editor, view) /* komodo 7+ */ :
+                            _getNextView(editor, view)         /* komodo 6- */;
                 }
 
             } else if (context.type == Components.interfaces.koIFindContext.FCT_IN_COLLECTION) {
@@ -470,8 +478,8 @@ ko.extensions.todo = {};
         }
 
         var numTodosFound = resultsMgr.view.rowCount;
-        gFindSession.Reset();
 
+        findSessionSvc.Reset();
         this.UpdateTodoStatusbar(numTodosFound);
 
         return numTodosFound;
