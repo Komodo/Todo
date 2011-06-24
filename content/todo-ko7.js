@@ -65,7 +65,7 @@ ko.extensions.todo = {};
     var todoId = 0x2D0; // 720, special xul id needed by the FindResults code
     var todoSearcher = null;
     var log = ko.logging.getLogger("ko.extensions.todo");
-    log.setLevel(ko.logging.LOG_DEBUG);
+    //log.setLevel(ko.logging.LOG_DEBUG);
 
     this.__defineGetter__("manager", function() {
                 return ko.findresults.managers[todoId];
