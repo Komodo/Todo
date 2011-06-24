@@ -42,7 +42,6 @@
 	<Description about="urn:mozilla:install-manifest">
 
 		<em:type>2</em:type> <!-- type=extension --> 
-		<em:unpack>true</em:unpack>
 		<em:id>todo@ActiveState.com</em:id>
 		<em:name>TODO helper</em:name>
 		<em:version>1.4.4</em:version>
