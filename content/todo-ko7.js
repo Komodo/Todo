@@ -65,18 +65,10 @@ ko.extensions.todo = {};
     var todoId = 0x2D0; // 720, special xul id needed by the FindResults code
     var todoSearcher = null;
     var log = ko.logging.getLogger("ko.extensions.todo");
-    //log.setLevel(ko.logging.LOG_DEBUG);
-
-    function _getTabManagerList() {
-        if ("findresults" in ko) {
-            return ko.findresults.managers;
-        } else {
-            return _gFindResultsTab_managers;
-        }
-    }
+    log.setLevel(ko.logging.LOG_DEBUG);
 
     this.__defineGetter__("manager", function() {
-                return _getTabManagerList()['720'];
+                return ko.findresults.managers[todoId];
             }
     );
 
@@ -107,12 +99,7 @@ ko.extensions.todo = {};
                                getService(Components.interfaces.nsIObserverService);
             obsSvc.addObserver(this, 'file_changed', false);
             obsSvc.addObserver(this, 'current_project_changed', false);
-            /* These three observer notifications are used before Komodo 5.0 */
-            obsSvc.addObserver(this, 'view_opened', false);
-            obsSvc.addObserver(this, 'view_closed', false);
-            obsSvc.addObserver(this, 'current_view_changed', false);
 
-            /* Komodo 5.0 style notifications for the three above events. */
             var self = this;
             this._handle_num_views_changed_event = function(event) {
                 self._handle_num_views_changed();
@@ -120,9 +107,9 @@ ko.extensions.todo = {};
             this._handle_current_view_changed_event = function(event) {
                 self._handle_current_view_changed(event.originalTarget);
             }
-            window.addEventListener('view_closed', this._handle_num_views_changed_event, false);
-            window.addEventListener('view_opened', this._handle_num_views_changed_event, false);
-            window.addEventListener('current_view_changed', this._handle_current_view_changed_event, false);
+            parent.window.addEventListener('view_closed', this._handle_num_views_changed_event, false);
+            parent.window.addEventListener('view_opened', this._handle_num_views_changed_event, false);
+            parent.window.addEventListener('current_view_changed', this._handle_current_view_changed_event, false);
 
             /* Komodo 4.x requires us to initially create the findSvc instance */
             var appInfo = Components.classes["@activestate.com/koInfoService;1"].
@@ -132,10 +119,6 @@ ko.extensions.todo = {};
                     findSvc = Components.classes["@activestate.com/koFindService;1"]
                               .getService(Components.interfaces.koIFindService);
                 }
-            }
-            if (appInfo.version[0] <= "5") {
-                // Komodo 5 doesn't support filtering of the find results.
-                document.getElementById("findresults720-filter-textbox").setAttribute("collapsed", "true");
             }
 
             // Ensure the search in project menu item has the correct name.
@@ -151,12 +134,9 @@ ko.extensions.todo = {};
                                getService(Components.interfaces.nsIObserverService);
             obsSvc.removeObserver(this, 'file_changed');
             obsSvc.removeObserver(this, 'current_project_changed');
-            obsSvc.removeObserver(this, 'view_opened');
-            obsSvc.removeObserver(this, 'view_closed');
-            obsSvc.removeObserver(this, 'current_view_changed');
-            window.removeEventListener('current_view_changed', this._handle_current_view_changed_event, false);
-            window.removeEventListener('view_closed', this._handle_num_views_changed_event, false);
-            window.removeEventListener('view_opened', this._handle_num_views_changed_event, false);
+            parent.window.removeEventListener('current_view_changed', this._handle_current_view_changed_event, false);
+            parent.window.removeEventListener('view_closed', this._handle_num_views_changed_event, false);
+            parent.window.removeEventListener('view_opened', this._handle_num_views_changed_event, false);
         } catch (ex) {
             log.exception(ex);
         }
@@ -209,6 +189,7 @@ ko.extensions.todo = {};
     }
 
     this.TodoSearcher.prototype._handle_current_view_changed = function(view) {
+        log.debug("_handle_current_view_changed");
         if (this._needsUpdating ||
             (this._currentSearchContext == "todo.currentFile")) {
             this.update(view);
@@ -331,9 +312,9 @@ ko.extensions.todo = {};
     this.TodoSearcher.prototype.GetAndClearTheTodoTab = function(id) {
         try {
             // Create the tab or clear it and return its manager.
-            var manager = _getTabManagerList()[id];
+            var manager = ko.findresults.managers[id];
             if (manager == null) {
-                manager = ("findresults" in ko) ? ko.findresults.create(id) : _FindResultsTab_Create(id);
+                manager = ko.findresults.create(id);
                 // Overriding the setDescription method.
                 // This requires some knowledge of the internals of the
                 // find/replace system. This method gets called every time the
@@ -345,7 +326,7 @@ ko.extensions.todo = {};
                     todoSearcher.UpdateTodoStatusbar(manager.view.rowCount);
                 }
 
-                _getTabManagerList()[id] = manager;
+                ko.findresults.managers[id] = manager;
             } else {
                 if (manager.isBusy()) {
                     manager.stopSearch();
@@ -469,8 +450,8 @@ ko.extensions.todo = {};
                 }
 
             } else if (context.type == Components.interfaces.koIFindContext.FCT_IN_COLLECTION) {
-                document.getElementById("findresults720-stopsearch-button").removeAttribute("collapsed");
-                document.getElementById("findresults720-stopsearch-button").removeAttribute("hidden");
+                document.getElementById("findresults-stopsearch-button").removeAttribute("collapsed");
+                document.getElementById("findresults-stopsearch-button").removeAttribute("hidden");
                 findSvc.findallinfiles(resultsMgr.id, pattern, resultsMgr);
 
             } else {
@@ -504,7 +485,7 @@ ko.extensions.todo = {};
 	
     //RRaver updates
     this.TodoSearcher.prototype.UpdateTodoStatusbar = function(numTodosFound) {
-        var todoStatusElem = document.getElementById('statusbar-todo');
+        var todoStatusElem = parent.document.getElementById('statusbar-todo');
         if (numTodosFound > 0) {
             todoStatusElem.hidden = false;
             todoStatusElem.setAttribute("tooltiptext", this.GetFormattedString('todo.todosFound', [numTodosFound]));
@@ -564,10 +545,16 @@ ko.extensions.todo = {};
         }
     }
 
+    this.focus = function() {
+        if (ko.extensions.todo.manager) {
+            ko.extensions.todo.manager.doc.getElementById("findresults").focus();
+        }
+    }
+
     this.OnLoad = function() {
         // Ensure find results knows about us
         try {
-            _getTabManagerList()[todoId] = null;
+            ko.findresults.managers[todoId] = null;
             todoSearcher = new ko.extensions.todo.TodoSearcher();
             if (ko.views.manager.currentView) {
                 todoSearcher.update();
@@ -579,22 +566,18 @@ ko.extensions.todo = {};
 
     this.OnUnload = function() {
         todoSearcher.onUnload();
-        delete todoSearcher;
+        todoSearcher = null;
     }
 
     //RRaver updates
     this.ToggleTodoPane = function() {
-        ko.uilayout.togglePane('bottom_splitter', 'output_tabs', 'cmd_viewBottomPane', true);
-        if (ko.uilayout.isPaneShown(document.getElementById("output_tabs"))) {
-            // Make the todo tab the current tab that is shown.
-            ko.uilayout.ensureTabShown("findresults720_tab", false);
-        }
+        // Make the todo tab the current tab that is shown.
+        ko.uilayout.toggleTab("findresults720_tabpanel", true);
     }
     //RRaver updates END
 
 }).apply(ko.extensions.todo);
 
 // Initialize it once Komodo has finished loading
-// XXX: TODO: Use an observer or notification mechanism.
-addEventListener("load", function() { setTimeout(ko.extensions.todo.OnLoad, 3000); }, false);
+addEventListener("load", setTimeout(function() { ko.extensions.todo.OnLoad(); }, 3000));
 addEventListener("unload", ko.extensions.todo.OnUnload, false);

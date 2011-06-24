@@ -48,5 +48,6 @@
 <!ENTITY todo.stopSearch "Stop Search">
 <!ENTITY todo.file "File">
 <!ENTITY todo.line "Line">
+<!ENTITY todoFindFilter.tooltiptext "Filter results: uses space-separated word matching">
 <!ENTITY todo.content "Content">
 <!ENTITY todo.foundSome "TODOs found">

@@ -40,8 +40,6 @@
 <!DOCTYPE overlay PUBLIC "-//MOZILLA//DTD XUL V1.0//EN" "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" [
   <!ENTITY % todoDTD SYSTEM "chrome://todo/locale/todo.dtd">
   %todoDTD;
-  <!ENTITY % komodoDTD SYSTEM "chrome://komodo/locale/komodo.dtd">
-  %komodoDTD;
 ]>
 
 <?xml-stylesheet href="chrome://todo/skin" type="text/css"?>
@@ -113,7 +111,7 @@
                          type="search"
                          timeout="200"
                          oncommand="ko.extensions.todo.manager.updateFilter();"
-                         tooltiptext="&findFilter.tooltiptext;"
+                         tooltiptext="&todoFindFilter.tooltiptext;"
                          />
                 <hbox id="findtoolbar720-button-box" class="no-border solo-toolbaritem"
                       align="center">

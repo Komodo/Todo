@@ -21,6 +21,7 @@
  
  Contributor(s):
    ActiveState Software Inc
+   Renato Raver
  
  Alternatively, the contents of this file may be used under the terms of
  either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -36,41 +37,34 @@
  
  ***** END LICENSE BLOCK ***** -->
 
-<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
-     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+<!DOCTYPE overlay PUBLIC "-//MOZILLA//DTD XUL V1.0//EN" "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" [
+  <!ENTITY % todoDTD SYSTEM "chrome://todo/locale/todo.dtd">
+  %todoDTD;
+]>
 
-	<Description about="urn:mozilla:install-manifest">
+<?xml-stylesheet href="chrome://todo/skin" type="text/css"?>
 
-		<em:type>2</em:type> <!-- type=extension --> 
-		<em:unpack>true</em:unpack>
-		<em:id>todo@ActiveState.com</em:id>
-		<em:name>TODO helper</em:name>
-		<em:version>1.4.4</em:version>
-		<em:description>Searchs and then lists file TODO markers</em:description>
-		<em:creator>Todd Whiteman</em:creator>
-		<em:contributor>Renato Rodrigues (RRaver)</em:contributor>
-		<em:iconURL>chrome://todo/skin/todoIcon.png</em:iconURL>
-		<!-- Leave empty to use the default Komodo settings -->
-		<em:homepageURL></em:homepageURL>
-		<em:updateURL></em:updateURL>
+<overlay id="overlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-		<em:targetApplication>
-			<Description>
-				<!-- Komodo IDE's uuid -->
-				<em:id>{36E66FA0-F259-11D9-850E-000D935D3368}</em:id>
-				<em:minVersion>4.4.0</em:minVersion>
-				<em:maxVersion>7.*</em:maxVersion>
-			</Description>
-		</em:targetApplication>
-		<em:targetApplication>
-			<Description>
-				<!-- Komodo Edit's uuid -->
-				<em:id>{b1042fb5-9e9c-11db-b107-000d935d3368}</em:id>
-				<em:minVersion>4.4.0</em:minVersion>
-				<em:maxVersion>7.*</em:maxVersion>
-			</Description>
-		</em:targetApplication>
-	</Description>
+    <ko-pane id="workspace_bottom_area">
+        <browser type="ko-widget"
+                 id="findresults720_tabpanel"
+                 label="&todo.tabTitle;"
+                 src="chrome://todo/content/todo-pane.xul"
+                 tab_onfocus="ko.extensions.todo.focus();" />
+    </ko-pane>
+    
+    <statusbar fullscreentoolbar="true" orient="horizontal"
+               id="statusbarviewbox" >
+        <statusbarpanel id="statusbar-todo"
+                        class="statusbarpanel-iconic"
+                        tooltiptext="&todo.foundSome;"
+                        onclick="ko.extensions.todo.ToggleTodoPane();"
+                        insertbefore="statusbar-section"
+                        src="chrome://todo/skin/todo.png"
+                        style="width: 30px;"
+                        hidden="true" />
+    </statusbar>
 
-</RDF>
-
+</overlay>

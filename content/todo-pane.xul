@@ -1,0 +1,158 @@
+<?xml version="1.0"?>
+
+<!-- ***** BEGIN LICENSE BLOCK *****
+ Version: MPL 1.1/GPL 2.0/LGPL 2.1
+ 
+ The contents of this file are subject to the Mozilla Public License
+ Version 1.1 (the "License"); you may not use this file except in
+ compliance with the License. You may obtain a copy of the License at
+ http://www.mozilla.org/MPL/
+ 
+ Software distributed under the License is distributed on an "AS IS"
+ basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
+ License for the specific language governing rights and limitations
+ under the License.
+ 
+ The Original Code is Komodo code.
+ 
+ The Initial Developer of the Original Code is ActiveState Software Inc.
+ Portions created by ActiveState Software Inc are Copyright (C) 2000-2011
+ ActiveState Software Inc. All Rights Reserved.
+ 
+ Contributor(s):
+   ActiveState Software Inc
+   Renato Raver
+ 
+ Alternatively, the contents of this file may be used under the terms of
+ either the GNU General Public License Version 2 or later (the "GPL"), or
+ the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ in which case the provisions of the GPL or the LGPL are applicable instead
+ of those above. If you wish to allow use of your version of this file only
+ under the terms of either the GPL or the LGPL, and not to allow others to
+ use your version of this file under the terms of the MPL, indicate your
+ decision by deleting the provisions above and replace them with the notice
+ and other provisions required by the GPL or the LGPL. If you do not delete
+ the provisions above, a recipient may use your version of this file under
+ the terms of any one of the MPL, the GPL or the LGPL.
+ 
+ ***** END LICENSE BLOCK ***** -->
+
+<!DOCTYPE overlay PUBLIC "-//MOZILLA//DTD XUL V1.0//EN" "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" [
+  <!ENTITY % todoDTD SYSTEM "chrome://todo/locale/todo.dtd">
+  %todoDTD;
+]>
+
+<?xml-stylesheet href="chrome://komodo/skin" type="text/css"?>
+<?xml-stylesheet href="chrome://komodo/skin/global/global.css" type="text/css"?>
+<?xml-stylesheet href="chrome://komodo/skin/bindings/scrolltabs.css" type="text/css"?>
+<?xml-stylesheet href="chrome://komodo/skin/bindings/sidebar.css" type="text/css"?>
+<?xml-stylesheet href="chrome://komodo/skin/bindings/views.css" type="text/css"?>
+<?xml-stylesheet href="chrome://komodo/skin/bindings/widgets.css" type="text/css"?>
+<?xml-stylesheet href="chrome://komodo/skin/toolbar.css" type="text/css"?>
+<?xml-stylesheet href="chrome://komodo/skin/platform.css" type="text/css"?>
+<?xml-stylesheet href="chrome://todo/skin" type="text/css"?>
+
+<page xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+    <script src="chrome://todo/content/todo-ko7.js" type="application/x-javascript"/>
+
+    <hbox id="findresults_tabpanel-toolbarbox"
+          align="center">
+        <label id="label-todo-desc"
+               style="height: 15px;"
+               value="&todo.pattern;" />
+        <!-- Needs both hidden and collapsed to ensure this label
+             does not flex out the UI! -->
+        <label id="findresults-desc"
+               style="height: 15px;"
+               value=""
+               flex="0"
+               hidden="true"
+               collapsed="true" />
+        <textbox id="todo_markers_textbox"
+                 onkeypress="ko.extensions.todo.TextboxKeypress(event);"
+                 tooltiptext="&todo.patternTooltip;" />
+        <toolbarbutton id="todo_button_refresh"
+                       image="chrome://komodo/skin/global/images/refresh.png"
+                       tooltiptext="&todo.refresh;"
+                       buttonstyle="pictures"
+                       oncommand="ko.extensions.todo.Refresh();" />
+        <button id="todo_search_context_button"
+                type="menu"
+                label="&todo.currentFile;">
+            <menupopup id="todo_search_context_menupopup">
+                <menuitem id="todo_search_context_menuitem_currentfile"
+                          label="&todo.currentFile;"
+                          value="todo.currentFile"
+                          oncommand="ko.extensions.todo.ChangeSearchContext(this.value)" />
+                <menuitem id="todo_search_context_menuitem_openedfiles"
+                          label="&todo.openedFiles;"
+                          value="todo.openedFiles"
+                          oncommand="ko.extensions.todo.ChangeSearchContext(this.value)" />
+                <menuitem id="todo_search_context_menuitem_activeproject"
+                          label="&todo.activeProject;"
+                          value="todo.activeProject"
+                          oncommand="ko.extensions.todo.ChangeSearchContext(this.value)" />
+            </menupopup>
+        </button>
+
+        <checkbox id="todo_search_case_sensitive"
+                  checked="false"
+                  label="&todo.caseSensitive;"
+                  oncommand="ko.extensions.todo.ChangeCase(this.checked)" />
+        <separator flex="1"/>
+        <textbox id="findresults-filter-textbox"
+                 class="search-box"
+                 type="search"
+                 timeout="200"
+                 oncommand="ko.extensions.todo.manager.updateFilter();"
+                 tooltiptext="&todoFindFilter.tooltiptext;"
+                 />
+        <hbox id="findtoolbar-button-box" class="no-border solo-toolbaritem"
+              align="center">
+            <toolbarbutton id="findresults-jumptoprev-button"
+                    class="list-item-up-icon button-toolbar-a"
+                    tooltiptext="&todo.previousResult;"
+                    oncommand="ko.extensions.todo.manager.jumpToPrevResult();" />
+            <toolbarbutton id="findresults-jumptonext-button"
+                    class="list-item-down-icon button-toolbar-a"
+                    tooltiptext="&todo.nextResult;"
+                    oncommand="ko.extensions.todo.manager.jumpToNextResult();" />
+            <!-- We are hiding the stop button as it does not work
+                 correctly. It needs to be here though for the find
+                 manager / results to work correctly. -->
+            <toolbarbutton id="findresults-stopsearch-button"
+                    class="find-stop-icon button-toolbar-a"
+                    tooltiptext="&todo.stopSearch;"
+                    oncommand="ko.extensions.todo.manager.stopSearch();"
+                    collapsed="true"
+                    disabled="true" />
+        </hbox>
+    </hbox>
+    <tree id="findresults"
+          flex="1"
+          seltype="single"
+          onclick="ko.extensions.todo.manager.onClick(event);"
+          onkeypress="return ko.extensions.todo.manager.onKeyPress(event);">
+          <!--class="no-border"-->
+        <treecols>
+            <treecol primary="true"
+                     id="findresults-filename"
+                     label="&todo.file;"
+                     flex="1"
+                     persist="width"
+                     crop="left" />
+            <splitter class="tree-splitter" />
+            <treecol id="findresults-linenum"
+                     label="&todo.line;"
+                     persist="width"
+                     style="width: 4em;" />
+            <splitter class="tree-splitter" />
+            <treecol id="findresults-context"
+                     label="&todo.content;"
+                     flex="1" />
+        </treecols>
+        <treechildren id="findresults-body"
+                      flex="1" />
+    </tree>
+</page>
