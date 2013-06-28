@@ -49,22 +49,26 @@
 <?xml-stylesheet href="chrome://komodo/skin/bindings/views.css" type="text/css"?>
 <?xml-stylesheet href="chrome://komodo/skin/bindings/widgets.css" type="text/css"?>
 <?xml-stylesheet href="chrome://komodo/skin/toolbar.css" type="text/css"?>
-<?xml-stylesheet href="chrome://komodo/skin/platform.css" type="text/css"?>
+<?xml-stylesheet href="chrome://komodo/skin/platform.less" type="stylesheet/less" media="less"?>
 <?xml-stylesheet href="chrome://todo/skin" type="text/css"?>
 
 <page xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
     <script src="chrome://todo/content/todo-ko7.js" type="application/x-javascript"/>
+    <script src="chrome://komodo/content/library/less_loader.js"
+                      type="application/x-javascript"/>
 
     <hbox id="findresults_tabpanel-toolbarbox"
           align="center">
         <label id="label-todo-desc"
                style="height: 15px;"
+               class="pane-text"
                value="&todo.pattern;" />
         <!-- Needs both hidden and collapsed to ensure this label
              does not flex out the UI! -->
         <label id="findresults-desc"
                style="height: 15px;"
+               class="pane-text"
                value=""
                flex="0"
                hidden="true"
@@ -79,7 +83,8 @@
                        oncommand="ko.extensions.todo.Refresh();" />
         <button id="todo_search_context_button"
                 type="menu"
-                label="&todo.currentFile;">
+                label="&todo.currentFile;"
+                class="pane-text">
             <menupopup id="todo_search_context_menupopup">
                 <menuitem id="todo_search_context_menuitem_currentfile"
                           label="&todo.currentFile;"
@@ -99,6 +104,7 @@
         <checkbox id="todo_search_case_sensitive"
                   checked="false"
                   label="&todo.caseSensitive;"
+                  class="pane-text"
                   oncommand="ko.extensions.todo.ChangeCase(this.checked)" />
         <separator flex="1"/>
         <textbox id="findresults-filter-textbox"
