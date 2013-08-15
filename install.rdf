@@ -45,7 +45,7 @@
 		<em:id>todo@ActiveState.com</em:id>
 		<em:name>TODO helper</em:name>
 		<em:version>1.4.4</em:version>
-		<em:description>Searchs and then lists file TODO markers</em:description>
+		<em:description>Searches and then lists file TODO markers</em:description>
 		<em:creator>Todd Whiteman</em:creator>
 		<em:contributor>Renato Rodrigues (RRaver)</em:contributor>
 		<em:iconURL>chrome://todo/skin/todoIcon.png</em:iconURL>
