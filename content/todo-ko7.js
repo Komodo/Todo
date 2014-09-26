@@ -579,5 +579,5 @@ ko.extensions.todo = {};
 }).apply(ko.extensions.todo);
 
 // Initialize it once Komodo has finished loading
-addEventListener("load", setTimeout(function() { ko.extensions.todo.OnLoad(); }, 3000));
+addEventListener("komodo-ui-loaded", ko.extensions.todo.OnLoad, false);
 addEventListener("unload", ko.extensions.todo.OnUnload, false);
