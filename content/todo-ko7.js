@@ -66,6 +66,9 @@ ko.extensions.todo = {};
     var todoSearcher = null;
     var log = ko.logging.getLogger("ko.extensions.todo");
     //log.setLevel(ko.logging.LOG_DEBUG);
+    var findSvc = Components.classes["@activestate.com/koFindService;1"]
+                      .getService(Components.interfaces.koIFindService);
+    var manager;
 
     this.__defineGetter__("manager", function() {
                 return ko.findresults.managers[todoId];
@@ -303,30 +306,38 @@ ko.extensions.todo = {};
                 this.GetAndClearTheTodoTab(todoId);
                 return;
             }
-            this.findAll(window, view, this._markers);
+            this.callWithTodoTab(this.findAll.bind(this, window, view, this._markers, null));
         } catch (ex) {
             log.exception(ex);
         }
-    }
+    };
 
-    this.TodoSearcher.prototype.GetAndClearTheTodoTab = function(id) {
+    this.TodoSearcher.prototype.GetAndClearTheTodoTab = function(id, callback) {
         try {
             // Create the tab or clear it and return its manager.
-            var manager = ko.findresults.managers[id];
+            manager = ko.findresults.managers[id];
             if (manager == null) {
-                manager = ko.findresults.create(id);
-                // Overriding the setDescription method.
-                // This requires some knowledge of the internals of the
-                // find/replace system. This method gets called every time the
-                // find results tree is updated. Since we don't show the
-                // description at all, we can pretty much do what we want with
-                // it...
-                manager.setDescription = function(subDesc /* =null */,
-                                                  important /* =false */) {
-                    todoSearcher.UpdateTodoStatusbar(manager.view.rowCount);
-                }
-
-                ko.findresults.managers[id] = manager;
+                ko.findresults.create(id,
+                            false,
+                            (newManager)=>
+                            {
+                                manager=newManager;
+                                // Overriding the setDescription method.
+                                // This requires some knowledge of the internals of the
+                                // find/replace system. This method gets called every time the
+                                // find results tree is updated. Since we don't show the
+                                // description at all, we can pretty much do what we want with
+                                // it...
+                                manager.setDescription = function(subDesc /* =null */,
+                                                                  important /* =false */) {
+                                    todoSearcher.UpdateTodoStatusbar(manager.view.rowCount);
+                                }
+                
+                                ko.findresults.managers[id] = manager;
+                                if(callback)
+                                    callback(manager);
+                            }
+                            );
             } else {
                 if (manager.isBusy()) {
                     manager.stopSearch();
@@ -339,6 +350,22 @@ ko.extensions.todo = {};
         }
         return null;
     }
+    /**
+     * Only added because the find tab stuff became async and no one told the
+     * TODO module
+     */
+    this.TodoSearcher.prototype.callWithTodoTab = function(callback)
+    {
+        if( ! manager )
+        {
+            this.GetAndClearTheTodoTab(todoId, callback);
+        }
+        else
+        {
+            callback(manager);
+        }
+            
+    }
 
     /**
      * Callback handler used to process messages coming back from the find
@@ -348,8 +375,8 @@ ko.extensions.todo = {};
         ko.statusBar.AddMessage(context+": "+msg, "todo", 3000, true);
     }
 
-    this.TodoSearcher.prototype.findAll = function(editor, view, pattern, patternAlias) {
-        var resultsMgr = this.GetAndClearTheTodoTab(todoId);
+    
+    this.TodoSearcher.prototype.findAll = function(editor, view, pattern, patternAlias, resultsMgr) {
         if (resultsMgr == null)
             return null;
         // We need a view which contains scintilla, bug 70309 and we
@@ -403,9 +430,6 @@ ko.extensions.todo = {};
         var findSessionSvc = Components.classes["@activestate.com/koFindSession;1"].
                                 getService(Components.interfaces.koIFindSession);
 
-        // Save original find settings
-        var findSvc = Components.classes["@activestate.com/koFindService;1"]
-                      .getService(Components.interfaces.koIFindService);
         this._origFindOptions.searchBackward = findSvc.options.searchBackward;
         this._origFindOptions.matchWord= findSvc.options.matchWord;
         this._origFindOptions.patternType = findSvc.options.patternType;
@@ -485,16 +509,11 @@ ko.extensions.todo = {};
 	
     //RRaver updates
     this.TodoSearcher.prototype.UpdateTodoStatusbar = function(numTodosFound) {
-        var todoStatusElem = parent.document.getElementById('statusbar-todo');
-        if (numTodosFound > 0) {
-            todoStatusElem.hidden = false;
-            todoStatusElem.setAttribute("tooltiptext", this.GetFormattedString('todo.todosFound', [numTodosFound]));
-        } else {
-            /* Hide the todo statusbar item */
-            todoStatusElem.hidden = true;
-        }
-
-    }
+        require("notify/notify").send(
+            this.GetFormattedString('todo.todosFound', [numTodosFound]), "TODO",
+            {priority: "info"}
+        );
+    };
     
     this.TodoSearcher.prototype.GetLocalizedString = function(str) {
         return this._locale.GetStringFromName(str);
@@ -577,7 +596,3 @@ ko.extensions.todo = {};
     //RRaver updates END
 
 }).apply(ko.extensions.todo);
-
-// Initialize it once Komodo has finished loading
-addEventListener("komodo-ui-loaded", ko.extensions.todo.OnLoad, false);
-addEventListener("unload", ko.extensions.todo.OnUnload, false);

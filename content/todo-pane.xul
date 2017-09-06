@@ -42,17 +42,12 @@
   %todoDTD;
 ]>
 
-<?xml-stylesheet href="chrome://komodo/skin" type="text/css"?>
-<?xml-stylesheet href="chrome://komodo/skin/global/global.css" type="text/css"?>
-<?xml-stylesheet href="chrome://komodo/skin/bindings/scrolltabs.css" type="text/css"?>
-<?xml-stylesheet href="chrome://komodo/skin/bindings/sidebar.css" type="text/css"?>
-<?xml-stylesheet href="chrome://komodo/skin/bindings/views.css" type="text/css"?>
-<?xml-stylesheet href="chrome://komodo/skin/bindings/widgets.css" type="text/css"?>
-<?xml-stylesheet href="chrome://komodo/skin/toolbar.css" type="text/css"?>
-<?xml-stylesheet href="chrome://komodo/skin/platform.less" type="stylesheet/less" media="less"?>
-<?xml-stylesheet href="chrome://todo/skin" type="text/css"?>
+<?xml-stylesheet href="less://komodo/skin/global/global.less" type="text/css"?>
 
-<page xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<page id="komodo-todo"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        onload="ko.extensions.todo.OnLoad();"
+    >
 
     <script src="chrome://todo/content/todo-ko7.js" type="application/x-javascript"/>
     <script src="chrome://komodo/content/library/less_loader.js"
@@ -77,6 +72,7 @@
                  onkeypress="ko.extensions.todo.TextboxKeypress(event);"
                  tooltiptext="&todo.patternTooltip;" />
         <toolbarbutton id="todo_button_refresh"
+                       class="icon-refresh"
                        image="chrome://komodo/skin/global/images/refresh.png"
                        tooltiptext="&todo.refresh;"
                        buttonstyle="pictures"
